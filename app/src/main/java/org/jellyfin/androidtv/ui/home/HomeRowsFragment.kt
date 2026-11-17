@@ -35,7 +35,6 @@ import org.jellyfin.androidtv.data.repository.NotificationsRepository
 import org.jellyfin.androidtv.data.repository.UserViewsRepository
 import org.jellyfin.androidtv.data.service.BackgroundService
 import org.jellyfin.androidtv.preference.UserPreferences
-import org.jellyfin.androidtv.preference.UserSettingPreferences
 import org.jellyfin.androidtv.ui.GridButton
 import org.jellyfin.androidtv.ui.browsing.CompositeClickedListener
 import org.jellyfin.androidtv.ui.browsing.CompositeSelectedListener
@@ -68,7 +67,6 @@ class HomeRowsFragment : RowsSupportFragment(), AudioEventListener, View.OnKeyLi
 	private val notificationsRepository by inject<NotificationsRepository>()
 	private val userRepository by inject<UserRepository>()
 	private val userPreferences by inject<UserPreferences>()
-	private val userSettingPreferences by inject<UserSettingPreferences>()
 	private val userViewsRepository by inject<UserViewsRepository>()
 	private val dataRefreshService by inject<DataRefreshService>()
 	private val customMessageRepository by inject<CustomMessageRepository>()
@@ -76,7 +74,7 @@ class HomeRowsFragment : RowsSupportFragment(), AudioEventListener, View.OnKeyLi
 	private val itemLauncher by inject<ItemLauncher>()
 	private val keyProcessor by inject<KeyProcessor>()
 
-	private val helper by lazy { HomeFragmentHelper(requireContext(), userRepository, userPreferences) }
+	private val helper by lazy { HomeFragmentHelper(requireContext(), api, userRepository, userPreferences) }
 
 	// Data
 	private var currentItem: BaseRowItem? = null
@@ -98,7 +96,7 @@ class HomeRowsFragment : RowsSupportFragment(), AudioEventListener, View.OnKeyLi
 			}
 
 			// Start out with default sections
-			val homesections = userSettingPreferences.activeHomesections
+			val homesections = userPreferences.activeHomesections
 
 			// Make sure the rows are empty
 			val rows = mutableListOf<HomeFragmentRow>()
@@ -121,6 +119,19 @@ class HomeRowsFragment : RowsSupportFragment(), AudioEventListener, View.OnKeyLi
 					rows.add(helper.loadOnNow())
 				}
 
+				HomeSectionType.RANDOM_ITEMS -> rows.add(helper.loadRandomItems())
+				HomeSectionType.HIDDEN_GEMS -> rows.addAll(helper.loadHiddenGems(userViewsRepository.views.first()))
+				HomeSectionType.RANDOM_GENRE -> helper.loadRandomGenre()?.let(rows::add)
+				HomeSectionType.RANDOM_COLLECTION -> helper.loadRandomCollection()?.let(rows::add)
+				HomeSectionType.REWATCH -> helper.loadRewatch()?.let(rows::add)
+				HomeSectionType.MORE_FROM_STUDIO -> helper.loadMoreFromStudio()?.let(rows::add)
+				HomeSectionType.CRITICALLY_ACCLAIMED -> helper.loadCriticallyAcclaimed()?.let(rows::add)
+				HomeSectionType.STANDUP_COMEDIAN -> helper.loadStandupComedian()?.let(rows::add)
+				HomeSectionType.RECENTLY_ADDED_ALL -> rows.add(helper.loadRecentlyAddedAll())
+				HomeSectionType.LATEST_RELEASES -> rows.add(helper.loadLatestReleases())
+				HomeSectionType.BECAUSE_YOU_WATCHED -> helper.loadBecauseYouWatched()?.let(rows::add)
+				HomeSectionType.STARRING -> helper.loadStarring()?.let(rows::add)
+				HomeSectionType.DIRECTED_BY -> helper.loadDirectedBy()?.let(rows::add)
 				HomeSectionType.NONE -> Unit
 			}
 

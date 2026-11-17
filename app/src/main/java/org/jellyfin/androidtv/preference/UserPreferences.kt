@@ -2,6 +2,7 @@ package org.jellyfin.androidtv.preference
 
 import android.content.Context
 import androidx.preference.PreferenceManager
+import org.jellyfin.androidtv.constant.HomeSectionType
 import org.jellyfin.androidtv.preference.UserPreferences.Companion.screensaverInAppEnabled
 import org.jellyfin.androidtv.preference.constant.AVCLevel
 import org.jellyfin.androidtv.preference.constant.AppTheme
@@ -218,6 +219,21 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		var homeNextUpMaxDays = intPreference("home_next_up_max_days", 0)
 
 		/**
+		 * Home screen section slots, stored on this device only.
+		 */
+		private const val HOME_SECTION_COUNT = 20
+		val homesections = listOf(
+			HomeSectionType.LIBRARY_TILES_SMALL,
+			HomeSectionType.RESUME,
+			HomeSectionType.RESUME_AUDIO,
+			HomeSectionType.RESUME_BOOK,
+			HomeSectionType.LIVE_TV,
+			HomeSectionType.NEXT_UP,
+			HomeSectionType.LATEST_MEDIA,
+		).let { it + List(HOME_SECTION_COUNT - it.size) { HomeSectionType.NONE } }
+			.mapIndexed { index, default -> enumPreference("home_section_$index", default) }
+
+		/**
 		 * Subtitles foreground color
 		 */
 		var subtitlesBackgroundColor = longPreference("subtitles_background_color", 0x00FFFFFF)
@@ -318,6 +334,11 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 */
 		var tvProviderEnabled = booleanPreference("tv_provider_enabled", true)
 	}
+
+	val activeHomesections
+		get() = homesections
+			.map(::get)
+			.filterNot { it == HomeSectionType.NONE }
 
 	init {
 		// Note: Create a single migration per app version
